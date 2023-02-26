@@ -6,6 +6,10 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
+  UsePipes,
+  ValidationPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ArticlesService } from './articles.service';
@@ -38,19 +42,28 @@ export class ArticlesController {
 
   @Get(':id')
   @ApiOkResponse({ type: ArticleEntity })
-  findOne(@Param('id') id: string) {
-    return this.articlesService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const article = await this.articlesService.findOne(+id);
+    if (!article) {
+      throw new NotFoundException(`Article with ${id} doesn't exist.`);
+    }
+    return article;
   }
 
   @Patch(':id')
+  @UsePipes(ValidationPipe)
   @ApiOkResponse({ type: ArticleEntity })
-  update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateArticleDto: UpdateArticleDto,
+  ) {
     return this.articlesService.update(+id, updateArticleDto);
   }
 
   @Delete(':id')
+  @UsePipes(ValidationPipe)
   @ApiOkResponse({ type: ArticleEntity })
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: string) {
     return this.articlesService.remove(+id);
   }
 }
